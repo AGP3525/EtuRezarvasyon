@@ -1,0 +1,208 @@
+@using Microsoft.AspNetCore.Identity
+@using EtuRezervasyon.Data
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@{
+    // Süper admin controller'ı için kontrol (adını ihtiyaca göre güncelleyebilirsiniz)
+    var isSuperAdmin = (ViewContext.RouteData.Values["controller"]?.ToString() == "SuperAdmin");
+    
+    // Aktif kullanıcının bildirim sayısını kontrol et
+    int notificationCount = 0;
+    if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+        {
+            notificationCount = DbContext.Notifications.Count(n => n.UserId == userId);
+        }
+    }
+}
+<nav class="navbar navbar-expand-lg w-100" style="background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div class="container-fluid px-4">
+        @if (!isSuperAdmin)
+        {
+            <a class="navbar-brand" href="/">
+                <img src="~/images/logo.png" alt="ETÜ Rezervasyon Sistemi" height="70" />
+            </a>
+        }
+        else
+        {
+            <span class="navbar-brand" style="cursor: default;">
+                <img src="~/images/logo.png" alt="ETÜ Rezervasyon Sistemi" height="70" />
+            </span>
+        }
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                @if (isSuperAdmin)
+                {
+                    <li class="nav-item">
+                        <form method="post" action="@Url.Action("Logout", "Signin")" id="logoutFormSuperAdmin" class="d-inline">
+                            <button type="submit" class="btn btn-link nav-link px-3 text-danger" style="font-weight: 500;">
+                                <i class="fas fa-sign-out-alt me-1"></i> Çıkış Yap
+                            </button>
+                        </form>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/" style="color: #1e3799; font-weight: 500;">Ana Sayfa</a>
+                    </li>
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link px-3 position-relative" href="/Notifications" style="color: #1e3799; font-weight: 500;">
+                                <i class="fas fa-bell me-1"></i> Bildirimler
+                                @if (notificationCount > 0)
+                                {
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        @notificationCount
+                                        <span class="visually-hidden">okunmamış bildirim</span>
+                                    </span>
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle px-3" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #1e3799; font-weight: 500;">
+                                <i class="fas fa-user-circle me-1"></i> @User.Identity.Name
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="/Rezervasyon/List">Rezervasyonlarım</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="@Url.Action("Logout", "Signin")" id="logoutForm" class="dropdown-item p-0">
+                                        <button type="submit" class="btn btn-link text-decoration-none text-danger w-100 text-start ps-3">
+                                            <i class="fas fa-sign-out-alt me-1"></i> Çıkış Yap
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="/Signin/Index" style="color: #1e3799; font-weight: 500;">
+                                <i class="fas fa-sign-in-alt me-1"></i> Giriş Yap
+                            </a>
+                        </li>
+                    }
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/#reservationSection" style="color: #1e3799; font-weight: 500;">Rezervasyon</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/#about-section" style="color: #1e3799; font-weight: 500;">Hakkımızda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="/#about-section" style="color: #1e3799; font-weight: 500;">İletişim</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Logout sonrası ana sayfaya yönlendirme
+    document.addEventListener("DOMContentLoaded", function () {
+        var logoutForm = document.getElementById("logoutFormSuperAdmin");
+        if (logoutForm) {
+            logoutForm.addEventListener("submit", function () {
+                setTimeout(function () {
+                    window.location.href = "/";
+                }, 100);
+            });
+        }
+    });
+</script>
+
+<style>
+    .navbar {
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        padding: 0.5rem 0;
+    }
+
+    body {
+        padding-top: 100px; /* Header'ın yüksekliği kadar padding ekliyoruz */
+    }
+    
+    .navbar-nav .nav-link:hover {
+        color: #74b9ff !important;
+        transition: color 0.3s ease;
+    }
+    
+    .navbar-brand img {
+        transition: transform 0.3s ease;
+    }
+    
+    .navbar-brand img:hover {
+        transform: scale(1.05);
+    }
+
+    .nav-link {
+        position: relative;
+    }
+
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: 0;
+        left: 50%;
+        background-color: #74b9ff;
+        transition: all 0.3s ease;
+    }
+
+    .nav-link:hover::after {
+        width: 100%;
+        left: 0;
+    }
+    
+    /* Dropdown menu enhancements */
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 0.5rem;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        color: #333;
+        transition: all 0.2s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+        color: #1e3799;
+    }
+    
+    .dropdown-item:active {
+        background-color: #e9ecef;
+        color: #1e3799;
+    }
+    
+    #logoutForm .btn-link, #logoutFormSuperAdmin .btn-link {
+        color: inherit;
+        font-weight: normal;
+        text-align: left;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+    }
+    
+    #logoutForm .btn-link:hover, #logoutFormSuperAdmin .btn-link:hover {
+        text-decoration: none;
+    }
+    
+    /* User icon styling */
+    .fa-user-circle {
+        font-size: 1.1em;
+    }
+</style>

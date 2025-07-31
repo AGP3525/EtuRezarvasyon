@@ -1,0 +1,647 @@
+@section Styles {
+    <link rel="stylesheet" href="~/css/signin.css" />
+}
+
+@{
+    ViewData["Title"] = "Giriş Yap";
+    Layout = "_Layout";
+}
+
+<div class="login-container">
+    <div class="login-box">
+        <div class="logo-area">
+            <a href="@Url.Action("Index", "Home")" class="logo-link">
+                <img src="~/images/logo2.png" alt="Logo" class="logo-image" />
+            </a>
+            <h4 class="text-center mb-4">Hoş Geldiniz</h4>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger mb-4" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success mb-4" role="alert">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @Html.AntiForgeryToken()
+
+        <form method="post" action="@Url.Action("Login", "Signin")" id="loginForm">
+            <div class="mb-4">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                    <input type="email" class="form-control" id="email" name="email" 
+                           placeholder="E-posta adresiniz" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" class="form-control" id="password" name="password" 
+                           placeholder="Şifreniz" required>
+                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
+                    <label class="form-check-label" for="rememberMe">Beni hatırla</label>
+                </div>
+                <a href="#" id="forgotPasswordLink" class="text-decoration-none">Şifremi unuttum</a>
+            </div>
+
+            <button type="submit" class="btn btn-login">Giriş Yap</button>
+        </form>
+    </div>
+</div>
+
+<!-- Şifremi Unuttum Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="forgotPasswordModalLabel">Şifre Sıfırlama</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <form id="forgotPasswordForm" method="post" action="@Url.Action("ForgotPassword", "Signin")">
+                    <div class="mb-4">
+                        <p class="text-muted mb-3">E-posta adresinizi girin, şifre sıfırlama kodunu e-posta adresinize göndereceğiz.</p>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <input type="email" class="form-control" id="resetEmail" name="email" 
+                                   placeholder="E-posta adresiniz" required>
+                        </div>
+                    </div>
+                    <button type="button" id="sendResetCodeBtn" class="btn btn-login w-100">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" style="display: none;" id="sendCodeSpinner"></span>
+                        Sıfırlama Kodu Gönder
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Şifre Sıfırlama Kodu Modal -->
+<div class="modal fade" id="verifyCodeModal" tabindex="-1" aria-labelledby="verifyCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="verifyCodeModalLabel">Doğrulama Kodu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div class="verify-code-step">
+                    <p class="text-muted mb-3">E-posta adresinize gönderilen 4 haneli sıfırlama kodunu girin.</p>
+                    <p class="countdown-text text-center mb-3">Kalan süre: <span id="countdownTimer">03:00</span></p>
+                    <div class="code-inputs mb-4">
+                        <div class="d-flex justify-content-center">
+                            <input type="text" class="form-control code-input" maxlength="1" id="code1" pattern="[0-9]" inputmode="numeric">
+                            <input type="text" class="form-control code-input" maxlength="1" id="code2" pattern="[0-9]" inputmode="numeric">
+                            <input type="text" class="form-control code-input" maxlength="1" id="code3" pattern="[0-9]" inputmode="numeric">
+                            <input type="text" class="form-control code-input" maxlength="1" id="code4" pattern="[0-9]" inputmode="numeric">
+                        </div>
+                    </div>
+                    <button type="button" id="resetCodeVerify" class="btn btn-login w-100">Doğrula</button>
+                </div>
+
+                <div class="new-password-step" style="display: none;">
+                    <p class="text-success mb-4">Kod doğrulandı! Yeni şifrenizi belirleyin.</p>
+                    
+                    <!-- Hata mesajları için alan ekliyorum -->
+                    <div id="passwordChangeErrorContainer" class="alert alert-danger mb-3" style="display: none;"></div>
+                    
+                    <form id="resetPasswordForm" method="post" action="@Url.Action("ResetPasswordWithCode", "Signin")">
+                        <input type="hidden" id="resetUserEmail" name="email">
+                        <input type="hidden" id="resetCode" name="code">
+                        
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Yeni Şifre</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="newPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="confirmNewPassword" class="form-label">Şifre Tekrar</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="confirmNewPassword" name="confirmNewPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="confirmNewPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-login w-100">Şifremi Yenile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        padding-top: 0 !important; /* Header padding'ini giriş sayfası için sıfırlıyoruz */
+    }
+    
+    .logo-link {
+        display: block;
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .logo-link:hover {
+        transform: scale(1.05);
+    }
+    
+    .logo-image {
+        cursor: pointer;
+    }
+    
+    /* Modal Stilleri */
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-header {
+        border-bottom: none;
+        padding: 20px 20px 0;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    #forgotPasswordForm .btn-login {
+        margin-top: 10px;
+    }
+    
+    /* Form etiketleri için stil */
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    /* Şifre görünürlük butonu stili */
+    .toggle-password {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+        border-color: #ced4da;
+        background-color: #f8f9fa;
+    }
+    
+    .toggle-password:hover {
+        background-color: #e9ecef;
+    }
+    
+    .toggle-password:focus {
+        box-shadow: none;
+        outline: none;
+    }
+    
+    /* Admin link stili */
+    .admin-link {
+        display: inline-block;
+        margin-top: 10px;
+        color: #6c757d;
+        font-size: 0.8rem;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    
+    .admin-link:hover {
+        color: #5a76e3;
+    }
+    
+    /* Kod doğrulama kutuları */
+    .code-inputs .form-control {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 0.5rem;
+        font-size: 1.5rem;
+        text-align: center;
+        border-radius: 10px;
+        border: 1px solid #ced4da;
+    }
+    
+    .code-inputs .form-control:focus {
+        border-color: #1e3799;
+        box-shadow: 0 0 0 0.2rem rgba(30, 55, 153, 0.25);
+    }
+    
+    /* Geri sayım */
+    .countdown-text {
+        font-weight: 500;
+    }
+    
+    #countdownTimer {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    /* Responsive ayarlamalar */
+    @* Razor'da @ işareti kaçış karakteridir, bu yüzden CSS @media için özel yazım kullanıyoruz *@
+    @@media (max-width: 576px) {
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+        
+        .code-inputs .form-control {
+            width: 2.5rem;
+            height: 2.5rem;
+            margin: 0 0.25rem;
+            font-size: 1.2rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sayfa yüklendiğinde localStorage'daki şifre sıfırlama bilgilerini temizle
+        localStorage.removeItem('resetCodeExpiry');
+        localStorage.removeItem('resetEmail');
+        
+        // Sayfa yenilendiğinde şifremi unuttum formunu sıfırla
+        document.getElementById('resetEmail').value = '';
+        document.getElementById('sendCodeSpinner').style.display = 'none';
+        document.getElementById('sendResetCodeBtn').disabled = false;
+
+        // Şifremi unuttum butonunu dinleme
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Şifremi unuttum formunu sıfırla
+            document.getElementById('resetEmail').value = '';
+            document.getElementById('sendCodeSpinner').style.display = 'none';
+            document.getElementById('sendResetCodeBtn').disabled = false;
+            
+            // Aktif kod yoksa veya süresi dolmuşsa, normal akışa devam et
+            const forgotPasswordModal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
+            forgotPasswordModal.show();
+        });
+        
+        // Doğrulama kodu modalini açma
+        function openVerifyCodeModal() {
+            const forgotPasswordModal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
+            if (forgotPasswordModal) {
+                forgotPasswordModal.hide();
+            }
+            
+            // Spinner'ı gizle ve butonu tekrar aktif et
+            document.getElementById('sendCodeSpinner').style.display = 'none';
+            document.getElementById('sendResetCodeBtn').disabled = false;
+            
+            // Doğrulama adımını göster, şifre değiştirme adımını gizle
+            document.querySelector('.verify-code-step').style.display = 'block';
+            document.querySelector('.new-password-step').style.display = 'none';
+            
+            const verifyCodeModal = new bootstrap.Modal(document.getElementById('verifyCodeModal'));
+            verifyCodeModal.show();
+            
+            // Zamanlayıcıyı başlat
+            startCountdown();
+            
+            // Giriş alanlarını temizle ve ilk alana odaklan
+            document.querySelectorAll('.code-input').forEach(input => {
+                input.value = '';
+            });
+            document.getElementById('code1').focus();
+        }
+        
+        // Sıfırlama kodu gönder butonu
+        const sendResetCodeBtn = document.getElementById('sendResetCodeBtn');
+        sendResetCodeBtn.addEventListener('click', function() {
+            const email = document.getElementById('resetEmail').value;
+            if (!email) {
+                alert('Lütfen e-posta adresinizi girin.');
+                return;
+            }
+            
+            // E-posta geçerliliği
+            const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Lütfen geçerli bir e-posta adresi girin.');
+                return;
+            }
+            
+            // Butonu devre dışı bırak ve spinner'ı göster
+            sendResetCodeBtn.disabled = true;
+            const spinner = document.getElementById('sendCodeSpinner');
+            spinner.style.display = 'inline-block';
+            
+            // AJAX call
+            fetch('@Url.Action("SendResetCode", "Signin")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Email'i hidden inputa aktar
+                    document.getElementById('resetUserEmail').value = email;
+                    
+                    // Eğer sunucu aktif bir kod olduğunu söylüyorsa
+                    if (data.hasActiveCode) {
+                        // Doğrudan doğrulama ekranını göster
+                        openVerifyCodeModal();
+                        return;
+                    }
+                    
+                    // Kod gönderildiğini ve son kullanma tarihini localStorage'a kaydet
+                    // Şu anki zamandan 3 dakika sonrası
+                    const expiryTime = new Date(new Date().getTime() + 3 * 60 * 1000);
+                    localStorage.setItem('resetCodeExpiry', expiryTime.toISOString());
+                    localStorage.setItem('resetEmail', email);
+                    
+                    // Doğrulama modalini aç
+                    openVerifyCodeModal();
+                } else {
+                    alert(data.message || 'Sıfırlama kodu gönderilirken bir hata oluştu.');
+                    // Hata durumunda butonu tekrar aktif et ve spinner'ı gizle
+                    sendResetCodeBtn.disabled = false;
+                    spinner.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+                // Hata durumunda butonu tekrar aktif et ve spinner'ı gizle
+                sendResetCodeBtn.disabled = false;
+                spinner.style.display = 'none';
+            });
+        });
+        
+        // Doğrula butonu
+        const verifyCodeBtn = document.getElementById('resetCodeVerify');
+        verifyCodeBtn.addEventListener('click', function() {
+            // 4 haneli kodu al
+            const code1 = document.getElementById('code1').value;
+            const code2 = document.getElementById('code2').value;
+            const code3 = document.getElementById('code3').value;
+            const code4 = document.getElementById('code4').value;
+            
+            if (!code1 || !code2 || !code3 || !code4) {
+                alert('Lütfen 4 haneli kodu tam olarak girin.');
+                return;
+            }
+            
+            const resetCode = code1 + code2 + code3 + code4;
+            const email = document.getElementById('resetUserEmail').value;
+            
+            // AJAX call
+            fetch('@Url.Action("VerifyResetCode", "Signin")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ email: email, code: resetCode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Doğrulama başarılı, şifre değiştirme adımını göster
+                    document.querySelector('.verify-code-step').style.display = 'none';
+                    document.querySelector('.new-password-step').style.display = 'block';
+                    
+                    // Kodu hidden inputa aktar
+                    document.getElementById('resetCode').value = resetCode;
+                } else {
+                    alert(data.message || 'Geçersiz doğrulama kodu.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+            });
+        });
+        
+        // Kod girişi otomatik ilerleme
+        const codeInputs = document.querySelectorAll('.code-input');
+        codeInputs.forEach((input, index) => {
+            input.addEventListener('input', function(e) {
+                // Yalnızca sayı girişine izin ver
+                this.value = this.value.replace(/[^0-9]/g, '');
+                
+                // Sonraki alana geç
+                if (this.value && index < codeInputs.length - 1) {
+                    codeInputs[index + 1].focus();
+                }
+            });
+            
+            // Backspace için önceki alana geç
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    codeInputs[index - 1].focus();
+                }
+            });
+        });
+        
+        // Şifre resetleme formu
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        resetPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Form gönderimini engelle
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+            const email = document.getElementById('resetUserEmail').value;
+            const code = document.getElementById('resetCode').value;
+            
+            // Şifrelerin eşleşip eşleşmediğini kontrol et
+            if (newPassword !== confirmNewPassword) {
+                showPasswordChangeError('Şifreler eşleşmiyor. Lütfen kontrol ediniz.');
+                return;
+            }
+            
+            // AJAX ile şifre değiştirme işlemini gerçekleştir
+            fetch('@Url.Action("ResetPasswordWithCode", "Signin")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    email: email,
+                    code: code,
+                    newPassword: newPassword,
+                    confirmNewPassword: confirmNewPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Başarılı olduğunda localStorage'ı temizle
+                    localStorage.removeItem('resetCodeExpiry');
+                    localStorage.removeItem('resetEmail');
+                    
+                    // Başarı mesajını göster ve modalı kapat
+                    showSuccessMessage('Şifreniz başarıyla değiştirildi. Yeni şifrenizle giriş yapabilirsiniz.');
+                    bootstrap.Modal.getInstance(document.getElementById('verifyCodeModal')).hide();
+                } else {
+                    // Hata mesajını göster
+                    showPasswordChangeError(data.message || 'Şifre değiştirme sırasında bir hata oluştu.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showPasswordChangeError('Bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+            });
+        });
+        
+        // Şifre değiştirme hata mesajını göster
+        function showPasswordChangeError(message) {
+            const errorContainer = document.getElementById('passwordChangeErrorContainer');
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+        }
+        
+        // Başarı mesajını login ekranında göster
+        function showSuccessMessage(message) {
+            // Modal kapatıldıktan sonra gösterilecek
+            setTimeout(() => {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success mb-4';
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.textContent = message;
+                
+                // Eski başarı mesajlarını temizle
+                document.querySelectorAll('.login-box .alert-success').forEach(el => el.remove());
+                
+                // Yeni mesajı ekle
+                document.querySelector('.login-box .logo-area').insertAdjacentElement('afterend', alertDiv);
+            }, 500);
+        }
+        
+        // Global zamanlayıcı değişkeni
+        let countdownInterval;
+        
+        // Geri sayım fonksiyonu
+        function startCountdown() {
+            // Önce mevcut zamanlayıcı varsa temizle
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            countdownInterval = setInterval(function() {
+                const currentTime = new Date();
+                const resetCodeExpiryStr = localStorage.getItem('resetCodeExpiry');
+                
+                // Eğer localStorage'da expiryTime yoksa geri sayımı durdur
+                if (!resetCodeExpiryStr) {
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                
+                const expiryTime = new Date(resetCodeExpiryStr);
+                
+                if (expiryTime <= currentTime) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdownTimer').textContent = "Süre doldu!";
+                    document.getElementById('countdownTimer').classList.add('text-danger');
+                    document.getElementById('resetCodeVerify').disabled = true;
+                    
+                    setTimeout(function() {
+                        bootstrap.Modal.getInstance(document.getElementById('verifyCodeModal')).hide();
+                        localStorage.removeItem('resetCodeExpiry');
+                        localStorage.removeItem('resetEmail');
+                    }, 3000);
+                    return;
+                }
+                
+                const remainingTime = Math.floor((expiryTime - currentTime) / 1000);
+                const minutes = Math.floor(remainingTime / 60);
+                const seconds = remainingTime % 60;
+                
+                document.getElementById('countdownTimer').textContent = 
+                    `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }, 1000);
+        }
+        
+        // Şifre görünürlük butonları
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const passwordInput = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+                
+                // Şifre görünürlüğünü değiştir
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // Modalları kapatmak için tüm kapat butonlarını dinle
+        document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+            button.addEventListener('click', function() {
+                // Hangi modalın kapatıldığını kontrol et
+                const modal = this.closest('.modal');
+                
+                if (modal.id === 'verifyCodeModal') {
+                    // Doğrulama modalı kapatıldığında geri sayım sayacını temizle
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                    }
+                    
+                    // Doğrulama butonunu aktif et ve sayacı sıfırla
+                    document.getElementById('resetCodeVerify').disabled = false;
+                    document.getElementById('countdownTimer').textContent = '';
+                    document.getElementById('countdownTimer').classList.remove('text-danger');
+                    
+                    // Kod inputlarını temizle
+                    document.querySelectorAll('.code-input').forEach(input => {
+                        input.value = '';
+                    });
+                } else if (modal.id === 'forgotPasswordModal') {
+                    // Şifremi unuttum modalı kapatıldığında formu sıfırla
+                    document.getElementById('resetEmail').value = '';
+                    document.getElementById('sendCodeSpinner').style.display = 'none';
+                    document.getElementById('sendResetCodeBtn').disabled = false;
+                }
+            });
+        });
+    });
+</script>

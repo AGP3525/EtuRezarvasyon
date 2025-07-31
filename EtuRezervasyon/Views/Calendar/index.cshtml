@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = ViewBag.Title;
+    var isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+    var loginUrl = Url.Action("Index", "Signin");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/calendar.css" />
+}
+
+@await Html.PartialAsync("_Header")
+<div class="col-md-4">
+    <div class="card resource-card h-100 border-0 shadow-sm hover-card">
+        <div class="card-body text-center p-4">
+            <div class="icon-wrapper mb-4">
+                <i class="fas fa-book"></i>
+            </div>
+            <h3 class="card-title fw-bold">Kütüphane</h3>
+            <p class="card-text text-muted">Sessiz ve verimli bir çalışma ortamı. Kaynaklara erişim için ideal alan.</p>
+            <a href="@(isAuthenticated ? Url.Action("Index", "Calendar", new { resourceType = "library" }) : loginUrl)" class="stretched-link"></a>
+        </div>
+        <div class="card-footer bg-transparent border-0 text-center pb-4">
+            <span class="btn btn-primary rounded-pill">Rezervasyon Yap</span>
+        </div>
+    </div>
+</div>
+
+<!-- Diğer kartlar için (Bu kısımların tam kart yapısında olduğunu varsayarak) -->
+@* Eğer bunlar da tam kart yapısındaysa, aşağıdaki gibi düzenlenmelidirler. 
+   Eğer sadece linklerse, mevcut yapıları korunarak href güncellenir.
+   Örnek olarak bir tanesini tam kart yapısında gösteriyorum, diğerini sadece link olarak bırakıyorum.
+   Projenizin yapısına göre bu kısımları düzenlemeniz gerekebilir. *@
+
+@* Proje Odası Kartı Örneği (Eğer tam kart ise) *@
+<div class="col-md-4"> @* Bu satır ve altındaki div'ler tam kart yapısı için eklenmiştir *@
+    <div class="card resource-card h-100 border-0 shadow-sm hover-card">
+        <div class="card-body text-center p-4">
+            <div class="icon-wrapper mb-4">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="card-title fw-bold">Proje Odası</h3>
+            <p class="card-text text-muted">Takım çalışmaları ve bireysel projeler için donanımlı alan.</p>
+            <a href="@(isAuthenticated ? Url.Action("Index", "Calendar", new { resourceType = "room" }) : loginUrl)" class="stretched-link"></a>
+        </div>
+        <div class="card-footer bg-transparent border-0 text-center pb-4">
+            <span class="btn btn-primary rounded-pill">Rezervasyon Yap</span>
+        </div>
+    </div>
+</div>
+
+@* Konferans Salonu Linki (Eğer sadece link ise veya farklı bir yapıda ise) *@
+@* Bu linkin de bir kart içinde olması beklenir, eğer "Rezervasyon Yap" butonu görünümündeyse *@
+<div class="col-md-4"> @* Bu satır ve altındaki div'ler tam kart yapısı için eklenmiştir *@
+    <div class="card resource-card h-100 border-0 shadow-sm hover-card">
+        <div class="card-body text-center p-4">
+            <div class="icon-wrapper mb-4">
+                <i class="fas fa-microphone-alt"></i>
+            </div>
+            <h3 class="card-title fw-bold">Konferans Salonu</h3>
+            <p class="card-text text-muted">Sunum, seminer ve etkinlikler için geniş ve teknolojik altyapılı salon.</p>
+            <a href="@(isAuthenticated ? Url.Action("Index", "Calendar", new { resourceType = "conference" }) : loginUrl)" class="stretched-link"></a>
+        </div>
+        <div class="card-footer bg-transparent border-0 text-center pb-4">
+            <span class="btn btn-primary rounded-pill">Rezervasyon Yap</span>
+        </div>
+    </div>
+</div>
+
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">@ViewBag.Title</h2>
+            
+            <div class="calendar-container">
+                @await Html.PartialAsync("_Calendar")
+            </div>
+            
+            <div class="mt-4">
+                <div class="legend">
+                    <div class="d-flex justify-content-center gap-4">
+                        <div class="legend-item">
+                            <span class="legend-color available"></span>
+                            <span>Müsait</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color reserved"></span>
+                            <span>Rezerve</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color selected"></span>
+                            <span>Seçili</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

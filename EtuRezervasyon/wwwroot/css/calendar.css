@@ -1,0 +1,40 @@
+.calendar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.legend {
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.legend-color.available {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.legend-color.reserved {
+    background-color: #dc3545;
+}
+
+.legend-color.selected {
+    background-color: #28a745;
+}

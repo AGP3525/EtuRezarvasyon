@@ -1,0 +1,181 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Logo stili */
+.navbar-logo {
+  height: 40px; /* Logo yüksekliği */
+  width: auto; /* Genişlik oranı korunsun */
+  transition: transform 0.3s ease; /* Hover efekti için */
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05); /* Hover durumunda hafif büyütme efekti */
+}
+
+/* Yeni eklenen stiller */
+.btn-primary {
+  background-color: #004a99;
+  border-color: #004a99;
+}
+
+.btn-primary:hover {
+  background-color: #003a7a;
+  border-color: #003a7a;
+}
+
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 8px;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.navbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Placeholder stili */
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+/* Özel renkli kartlar için stil (Koyu mor - #25215F) */
+.turquoise-card {
+  border-color: rgba(37, 33, 95, 1); /* Koyu mor/lacivert renk - RGBA formatı */
+  border-width: 2px;
+  height: 100%; /* Eşit yükseklik için */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 8px;
+}
+
+.turquoise-card .card-header {
+  background-color: rgba(37, 33, 95, 0.15); /* Hafif mor ton */
+  border-bottom: 2px solid rgba(37, 33, 95, 1);
+  font-weight: 600;
+}
+
+.turquoise-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(37, 33, 95, 0.3);
+}
+
+.equal-height-cards .col {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+/* wwwroot/css/signin.css */
+.login-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e3799 0%, #4a69bd 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1001;
+}
+
+.login-box {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 400px;
+    backdrop-filter: blur(10px);
+}
+
+.logo-area {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-area img {
+    max-width: 150px;
+    margin-bottom: 1rem;
+}
+
+.form-control {
+    border-radius: 5px;
+    padding: 0.75rem 1rem;
+}
+
+.btn-login {
+    background-color: #1e3799 !important;
+    color: white !important;
+    padding: 0.75rem !important;
+    border-radius: 5px !important;
+    width: 100% !important;
+    font-weight: 500 !important;
+    transition: all 0.3s !important;
+}
+
+.btn-login:hover {
+    background-color: #4a69bd !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 55, 153, 0.2);
+}
+
+.input-group-text {
+    background-color: transparent;
+    border-right: none;
+}
+
+.form-control {
+    border-left: none;
+}
+
+.form-control:focus {
+    border-color: #1e3799;
+    box-shadow: 0 0 0 0.2rem rgba(30, 55, 153, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #1e3799;
+    border-color: #1e3799;
+}
+
+.text-decoration-none {
+    color: #1e3799 !important;
+}
+
+.text-decoration-none:hover {
+    color: #4a69bd !important;
+}
+
+.input-group-text {
+    color: #1e3799;
+}

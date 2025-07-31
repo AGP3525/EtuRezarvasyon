@@ -1,0 +1,27 @@
+@model EtuRezervasyon.Models.User
+
+@{
+    ViewData["Title"] = "Kullanıcı Detayları";
+}
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Ad Soyad</dt>
+            <dd class="col-sm-9">@Model.FullName</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Rol</dt>
+            <dd class="col-sm-9">@(Model.Role?.Name ?? "Tanımsız")</dd>
+
+            <dt class="col-sm-3">Oluşturulma</dt>
+            <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+        </dl>
+
+        <a href="/SuperAdmin/Index" class="btn btn-secondary">Geri Dön</a>
+    </div>
+</div>

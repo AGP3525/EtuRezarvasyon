@@ -1,0 +1,47 @@
+@model List<EtuRezervasyon.Models.Notification>
+@{
+    ViewData["Title"] = "Bildirimlerim";
+}
+
+@await Html.PartialAsync("_Header")
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Bildirimlerim</h2>
+            
+            @if (Model != null && Model.Any())
+            {
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Tüm Bildirimler</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        @foreach (var notification in Model)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Rezervasyon Bildirimi</h5>
+                                    <small class="text-muted">@notification.SentAt.ToLocalTime().ToString("dd MMMM yyyy HH:mm")</small>
+                                </div>
+                                <p class="mb-1">@notification.Message</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <p class="mb-0">Henüz bildiriminiz bulunmamaktadır.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+</style> 

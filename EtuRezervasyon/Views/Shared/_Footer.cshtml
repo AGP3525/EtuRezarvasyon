@@ -1,0 +1,196 @@
+<footer class="footer py-5 mt-5" id="about-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="footer-content">
+                    <h4 class="text-uppercase mb-4 fw-bold">ETÜ Rezervasyon</h4>
+                    <p class="mb-4">Erzurum Teknik Üniversitesi bünyesindeki kaynaklar için hızlı ve kolay rezervasyon sistemi. Her zaman, her yerden erişilebilir dijital çözüm.</p>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="footer-content team-section">
+                    <h4 class="text-uppercase mb-4 fw-bold">Proje Ekibi</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="team-member">
+                                <i class="fas fa-user-circle team-icon"></i>
+                                <span>Doğukan KILIÇ</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="team-member">
+                                <i class="fas fa-user-circle team-icon"></i>
+                                <span>Hasan ŞENMEMİŞ</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="team-member">
+                                <i class="fas fa-user-circle team-icon"></i>
+                                <span>Alican GÜLDÜRDEK</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="team-member">
+                                <i class="fas fa-user-circle team-icon"></i>
+                                <span>Emircan Görkem ECE</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="team-member">
+                                <i class="fas fa-user-circle team-icon"></i>
+                                <span>Mehmet Can KARA</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="team-member">
+                                <i class="fas fa-user-circle team-icon"></i>
+                                <span>Gökberk KARADENİZ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="footer-divider my-4">
+        
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <p class="mb-0 copyright">© @DateTime.Now.Year ETÜ Rezervasyon. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .footer {
+        background: linear-gradient(135deg, #1e3799 0%, #0c2461 100%);
+        color: #ffffff;
+        border-top: 5px solid #74b9ff;
+        box-shadow: 0 -10px 20px rgba(0,0,0,0.05);
+    }
+    
+    .footer-content {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 25px;
+        height: 100%;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .footer-content:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .footer h4 {
+        color: #74b9ff;
+        letter-spacing: 1.5px;
+        font-size: 1.5rem;
+        position: relative;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+    
+    .footer h4:after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -10px;
+        width: 50px;
+        height: 3px;
+        background: #74b9ff;
+        border-radius: 3px;
+    }
+    
+    .social-icons {
+        display: flex;
+        gap: 15px;
+        margin-top: 25px;
+    }
+    
+    .social-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        border-radius: 50%;
+        text-align: center;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+    
+    .social-icon:hover {
+        background: #74b9ff;
+        color: #1e3799;
+        transform: translateY(-3px);
+    }
+    
+    .team-member {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        background-color: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+        color: #fff;
+    }
+    
+    .team-member:hover {
+        background-color: rgba(116, 185, 255, 0.2);
+        transform: translateX(5px);
+    }
+    
+    .team-icon {
+        font-size: 1.5rem;
+        margin-right: 15px;
+        color: #74b9ff;
+    }
+    
+    .footer-divider {
+        border-color: rgba(255, 255, 255, 0.1);
+        margin: 30px 0;
+    }
+    
+    .copyright {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+    }
+    
+    @@media (max-width: 991.98px) {
+        .footer-content {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+
+<script>
+    // Hakkımızda linkine tıklandığında sayfayı footer'a kaydır
+    document.addEventListener('DOMContentLoaded', function() {
+        const aboutLinks = document.querySelectorAll('a[href="#about-section"]');
+        
+        aboutLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const aboutSection = document.getElementById('about-section');
+                if (aboutSection) {
+                    aboutSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    });
+</script> 

@@ -1,0 +1,798 @@
+@{
+    var currentYear = DateTime.Now.Year;
+    var currentDate = DateTime.Now;
+    var currentMonth = currentDate.Month;
+    var months = System.Globalization.CultureInfo.GetCultureInfo("tr-TR").DateTimeFormat.MonthNames[..^1];
+    
+    // Varsayılan kaynak tipi
+    var resourceType = "room";
+    
+    // Bu kısmı senaryolarına göre güncelleyip resourceType'ı belirleyelim
+    if (ViewBag.ResourceType != null)
+    {
+        resourceType = ViewBag.ResourceType; // Calendar Controller'dan gelen değer
+    }
+}
+
+<!-- Tamamen bağımsız takvim -->
+<div id="bagimsizTakvim" class="takvim-container" data-resource-type="@resourceType">
+    <div class="takvim-header">
+        <a href="javascript:void(0);" id="oncekiAy" class="ay-dugme" onclick="event.preventDefault(); oncekiAyaGit(); return false;">&lt;</a>
+        <h3 id="suankiAyYil">@months[currentMonth - 1] @currentYear</h3>
+        <a href="javascript:void(0);" id="sonrakiAy" class="ay-dugme" onclick="event.preventDefault(); sonrakiAyaGit(); return false;">&gt;</a>
+    </div>
+    
+    <div class="takvim-icerik">
+        <div class="gunler-baslik">
+            <span>Pzt</span>
+            <span>Sal</span>
+            <span>Çar</span>
+            <span>Per</span>
+            <span>Cum</span>
+            <span>Cmt</span>
+            <span>Paz</span>
+        </div>
+        <div class="gunler-container" id="gunlerContainer"></div>
+    </div>
+    <!-- Saat seçimi bölmesi -->
+    <div id="saatSecimBolmesi" class="saat-secim-bolmesi" style="display:none;"></div>
+</div>
+
+<!-- Rezervasyon başarılı modal -->
+<div class="modal fade" id="reservationSuccessModal" tabindex="-1" aria-labelledby="reservationSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="reservationSuccessModalLabel">Rezervasyon Başarılı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Rezervasyon talebiniz başarıyla alınmıştır.</p>
+                <p>Rezervasyon bilgileriniz:</p>
+                <ul>
+                    <li><strong>Tarih:</strong> <span id="reservationDate"></span></li>
+                    <li><strong>Saat:</strong> <span id="reservationTime"></span></li>
+                    <li><strong>Kaynak:</strong> <span id="reservationResource"></span></li>
+                </ul>
+                <p>Rezervasyonunuz onaylandığında bildirim alacaksınız.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hata modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="errorModalLabel">Hata</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage">Bir hata oluştu. Lütfen tekrar deneyin.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .takvim-container {
+        max-width: 90%;
+        margin: 0 auto;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-radius: 10px;
+        overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        z-index: 10;
+        position: relative;
+    }
+
+    .takvim-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f8f9fa;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .takvim-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .ay-dugme {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #fff;
+        color: #333;
+        border: 1px solid #dee2e6;
+        text-decoration: none;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .ay-dugme:hover {
+        background-color: #e9ecef;
+    }
+
+    .takvim-icerik {
+        padding: 8px;
+    }
+
+    .gunler-baslik {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 8px;
+        padding: 4px 0;
+    }
+
+    .gunler-container {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+    }
+
+    .gun {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        position: relative;
+        color: #212529;
+        min-width: 30px;
+        min-height: 30px;
+        user-select: none; /* Metin seçimini engelle */
+        -webkit-tap-highlight-color: transparent; /* Mobil cihazlarda tıklama efektini kaldır */
+    }
+
+    .gun:not(.aktif-degil):hover {
+        background-color: #f1f3f5;
+        color: #000;
+        transform: scale(1.05);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .gun:not(.aktif-degil):active {
+        transform: scale(0.95);
+        background-color: #e9ecef;
+    }
+
+    .gun.aktif-degil {
+        color: #ced4da;
+        cursor: default;
+    }
+
+    .gun.bugun {
+        border: 2px solid #0d6efd;
+        font-weight: 600;
+        color: #0d6efd;
+    }
+
+    .gun.secili {
+        background-color: #198754;
+        color: white;
+        font-weight: 500;
+    }
+
+    .gun.bugun.secili {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+
+    .saat-secim-bolmesi {
+        margin: 20px 0 0 0;
+        width: 100%;
+        background: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        padding: 20px 24px;
+        border: 1px solid #e3e6f0;
+        display: none;
+        z-index: 20;
+        /* Takvim ile aynı genişlikte hizalama için */
+        box-sizing: border-box;
+    }
+    .saat-secim-bolmesi h5 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        color: #333;
+        font-weight: 600;
+    }
+    .saatler-listesi {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .saat-btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        color: #212529;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+    }
+    .saat-btn.selected, .saat-btn:active {
+        background: #198754;
+        color: #fff;
+        border-color: #198754;
+    }
+    .saat-btn:hover {
+        background: #e9ecef;
+    }
+    .saat-btn.reserved {
+        background: #dc3545;
+        color: #fff;
+        border-color: #dc3545;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+    .saat-btn.reserved:hover {
+        background: #dc3545;
+        opacity: 1;
+    }
+    .saat-secim-bolmesi .secili-tarih {
+        font-size: 0.95rem;
+        color: #0d6efd;
+        margin-bottom: 10px;
+        display: block;
+    }
+</style>
+
+<script>
+    // Global değişkenler - tüm sayfa için erişilebilir
+    var suankiYil = @currentYear;
+    var suankiAy = @currentMonth; // 1-12 arası
+    var aylar = [@Html.Raw(string.Join(",", months.Select(m => $"\"{m}\"")))];
+    
+    // Kaynak tipini belirle (URL'den veya veri özelliğinden)
+    var kaynakTipi = tespit_KaynakTipi();
+
+    function tespit_KaynakTipi() {
+        // 1. Önce takvim container'ından almayı dene
+        var takvimContainer = document.getElementById('bagimsizTakvim');
+        if (takvimContainer && takvimContainer.dataset.resourceType) {
+            return takvimContainer.dataset.resourceType;
+        }
+        
+        // 2. URL'den tespit etmeyi dene
+        var currentUrl = window.location.pathname.toLowerCase();
+        
+        if (currentUrl.includes('/rezarvasyon/kütüphane') || currentUrl.includes('/rezarvasyon/kutuphane') || currentUrl.includes('/rezarvasyon/library')) {
+            return "library";
+        } else if (currentUrl.includes('/rezarvasyon/projeodasi') || currentUrl.includes('/rezarvasyon/projeodası')) {
+            return "room";
+        } else if (currentUrl.includes('/rezarvasyon/konferanssalonu') || currentUrl.includes('/rezarvasyon/conferencehall')) {
+            return "conference";
+        } else if (currentUrl.includes('/calendar')) {
+            // URL parametrelerinden resourceType'ı almaya çalış
+            var urlParams = new URLSearchParams(window.location.search);
+            var paramType = urlParams.get('resourceType');
+            if (paramType) {
+                return paramType;
+            }
+        }
+        
+        // 3. Varsayılan olarak "room" döndür
+        return "room";
+    }
+    
+    function oncekiAyaGit() {
+        suankiAy--;
+        if (suankiAy < 1) {
+            suankiAy = 12;
+            suankiYil--;
+        }
+        takvimGuncelle(suankiYil, suankiAy);
+        return false;
+    }
+    
+    function sonrakiAyaGit() {
+        suankiAy++;
+        if (suankiAy > 12) {
+            suankiAy = 1;
+            suankiYil++;
+        }
+        takvimGuncelle(suankiYil, suankiAy);
+        return false;
+    }
+    
+    function gunSec(element, gun, ay, yil, tarih) {
+        // Tüm seçili sınıfları kaldır
+        document.querySelectorAll('.gun.secili').forEach(function(el) {
+            el.classList.remove('secili');
+        });
+        
+        // Bu güne seçili sınıfı ekle
+        element.classList.add('secili');
+        
+        // Seçili günü kaynak tipine göre kaydet
+        var kaynakAnahtar = kaynakTipi + "_seciliGun";
+        var ayAnahtar = kaynakTipi + "_seciliAy";
+        var yilAnahtar = kaynakTipi + "_seciliYil";
+        
+        localStorage.setItem(kaynakAnahtar, gun);
+        localStorage.setItem(ayAnahtar, ay);
+        localStorage.setItem(yilAnahtar, yil);
+        
+        // Seçilen tarih hakkında bilgi ver
+        console.log('Seçilen ' + kaynakTipi + ' tarihi:', tarih);
+
+        // Saat seçimi bölmesini göster ve rezervasyonları yükle
+        saatSecimBolmesiniGoster(tarih);
+
+        return false;
+    }
+
+    function saatSecimBolmesiniGoster(tarih) {
+        var bolme = document.getElementById('saatSecimBolmesi');
+        bolme.innerHTML = ''; // Temizle
+
+        // Başlık ve seçili tarih
+        var tarihSpan = document.createElement('span');
+        tarihSpan.className = 'secili-tarih';
+        tarihSpan.textContent = 'Seçili Tarih: ' + tarih;
+        bolme.appendChild(tarihSpan);
+
+        var h5 = document.createElement('h5');
+        h5.textContent = 'Saat Seçiniz';
+        bolme.appendChild(h5);
+
+        // Saatler listesi
+        var saatlerDiv = document.createElement('div');
+        saatlerDiv.className = 'saatler-listesi';
+
+        // Yükleniyor göstergesi
+        var yukleniyor = document.createElement('div');
+        yukleniyor.className = 'text-center my-3';
+        yukleniyor.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Yükleniyor...</span></div>';
+        bolme.appendChild(yukleniyor);
+        
+        bolme.style.display = 'block'; // Yükleniyor durumunu göster
+        
+        // API'ye istek at ve müsait saatleri kontrol et - Basitleştirilmiş hata yönetimi
+        var url = `/Rezervasyon/GetAvailableHours?date=${tarih}&resourceType=${kaynakTipi}`;
+        
+        fetch(url)
+            .then(function(response) {
+                // Yanıt başarılı değilse hata fırlat
+                if (!response.ok) {
+                    throw new Error('Sunucu yanıtı: ' + response.status);
+                }
+                // JSON dönüşümü yap
+                return response.json();
+            })
+            .then(function(data) {
+                // Yükleniyor göstergesini kaldır
+                try {
+                    bolme.removeChild(yukleniyor);
+                } catch (e) {
+                    console.log('Yükleniyor göstergesi zaten kaldırılmış.');
+                }
+                
+                // Veri kontrolü
+                if (!Array.isArray(data)) {
+                    throw new Error('Sunucudan gelen veri doğru formatta değil');
+                }
+                
+                // Saatleri göster
+                saatleriGoster(data, saatlerDiv, tarih, bolme);
+            })
+            .catch(function(error) {
+                console.error('Hata:', error);
+                
+                // Yükleniyor göstergesini kaldır
+                try {
+                    bolme.removeChild(yukleniyor);
+                } catch (e) {
+                    console.log('Yükleniyor göstergesi zaten kaldırılmış.');
+                }
+                
+                // Hata mesajını göster
+                var errorMessage = document.createElement('div');
+                errorMessage.className = 'alert alert-danger';
+                errorMessage.textContent = 'Müsait saatler yüklenirken bir hata oluştu: ' + error.message;
+                bolme.appendChild(errorMessage);
+                
+                // Yeniden deneme butonu
+                var retryBtn = document.createElement('button');
+                retryBtn.className = 'btn btn-sm btn-outline-primary mt-2';
+                retryBtn.textContent = 'Yeniden Dene';
+                retryBtn.onclick = function() {
+                    saatSecimBolmesiniGoster(tarih);
+                };
+                bolme.appendChild(retryBtn);
+            });
+    }
+    
+    // Saatleri gösterme işlemi için ayrı bir fonksiyon
+    function saatleriGoster(data, saatlerDiv, tarih, bolme) {
+        // Tüm mevcut düğmeleri temizle
+        saatlerDiv.innerHTML = '';
+        
+        // Debug kontrolü
+        console.log("API'den gelen saatler:", data);
+        for (var i = 0; i < data.length; i++) {
+            console.log(`Saat ${i+1}: ${data[i].timeSlot}, Rezerve: ${data[i].isReserved}`);
+        }
+        
+        // Seçili saat için localStorage kontrolü
+        var saatAnahtar = kaynakTipi + "_seciliSaat";
+        var tarihAnahtar = kaynakTipi + "_seciliSaatTarih";
+        var seciliSaat = localStorage.getItem(saatAnahtar);
+        var seciliSaatTarih = localStorage.getItem(tarihAnahtar);
+
+        // Her bir saat için buton oluştur
+        data.forEach(function(saatInfo) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'saat-btn';
+            btn.dataset.timeSlot = saatInfo.timeSlot;
+            
+            // Rezervasyon durumunu kontrol et
+            if (saatInfo.isReserved) {
+                btn.className += ' reserved';
+                btn.disabled = true;
+                btn.title = 'Bu saat rezerve edilmiş';
+                console.log(`${saatInfo.timeSlot} - REZERVE edilmiş!`);
+            } else {
+                console.log(`${saatInfo.timeSlot} - Müsait`);
+            }
+            
+            btn.textContent = saatInfo.timeSlot;
+            
+            // Daha önce seçilmişse ve rezerve edilmemişse sınıfı ekle
+            if (seciliSaat === saatInfo.timeSlot && seciliSaatTarih === tarih && !saatInfo.isReserved) {
+                btn.classList.add('selected');
+            }
+            
+            // Sadece müsait saatlere tıklama özelliği ekle
+            if (!saatInfo.isReserved) {
+            btn.onclick = function() {
+                // Diğer butonlardan seçimi kaldır
+                saatlerDiv.querySelectorAll('.saat-btn').forEach(function(b){ b.classList.remove('selected'); });
+                btn.classList.add('selected');
+                // Seçili saati kaydet
+                    localStorage.setItem(saatAnahtar, saatInfo.timeSlot);
+                localStorage.setItem(tarihAnahtar, tarih);
+                // Bilgi mesajı
+                    bolme.querySelector('.secili-tarih').textContent = 'Seçili Tarih: ' + tarih + ' | Saat: ' + saatInfo.timeSlot;
+            };
+            }
+            
+            saatlerDiv.appendChild(btn);
+        });
+
+        bolme.appendChild(saatlerDiv);
+
+        // Buton container'ı ekle
+        var btnContainer = document.createElement('div');
+        btnContainer.style.display = 'flex';
+        btnContainer.style.gap = '10px';
+        btnContainer.style.marginTop = '10px';
+
+        // Kapatma butonu
+        var kapatBtn = document.createElement('button');
+        kapatBtn.type = 'button';
+        kapatBtn.className = 'btn btn-sm btn-outline-secondary';
+        kapatBtn.textContent = 'Kapat';
+        kapatBtn.onclick = function() {
+            bolme.style.display = 'none';
+        };
+        btnContainer.appendChild(kapatBtn);
+
+        // Rezervasyon oluşturma butonu
+        var rezervasyonBtn = document.createElement('button');
+        rezervasyonBtn.type = 'button';
+        rezervasyonBtn.className = 'btn btn-sm btn-success';
+        rezervasyonBtn.textContent = 'Rezervasyon Oluştur';
+        rezervasyonBtn.onclick = function() {
+            // Seçili saat kontrolü
+            var seciliSaatElement = saatlerDiv.querySelector('.saat-btn.selected');
+            if (!seciliSaatElement) {
+                showErrorModal('Lütfen bir saat seçin.');
+                return;
+            }
+            
+            // Rezervasyon oluşturma isteği gönder
+            createReservation(tarih, seciliSaatElement.dataset.timeSlot, kaynakTipi);
+        };
+        btnContainer.appendChild(rezervasyonBtn);
+
+        bolme.appendChild(btnContainer);
+    }
+    
+    function createReservation(date, timeSlot, resourceType) {
+        // Rezervasyon için veri hazırla - tarih formatını kontrol et
+        if (!date || date.trim() === '') {
+            showErrorModal('Lütfen geçerli bir tarih seçin.');
+            return;
+        }
+        
+        console.log("Seçilen Tarih:", date);
+        console.log("Seçilen Saat:", timeSlot);
+        console.log("Seçilen Kaynak Tipi:", resourceType);
+        
+        // Tarih ve saat formatını kontrol et
+        var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+            showErrorModal('Geçersiz tarih formatı: ' + date);
+            return;
+        }
+        
+        var reservationData = {
+            date: date,
+            timeSlot: timeSlot,
+            resourceType: resourceType
+        };
+        
+        console.log("Gönderilen rezervasyon verisi:", JSON.stringify(reservationData));
+        
+        // Anti-forgery token'ı bul
+        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        
+        // Kullanıcının oturum açıp açmadığını kontrol et
+        if (!token) {
+            showErrorModal("Güvenlik doğrulaması için gerekli token bulunamadı. Sayfayı yenileyip tekrar deneyin.");
+            return;
+        }
+        
+        // API'ye istek gönder - basitleştirilmiş hata yönetimi
+        fetch('/Rezervasyon/CreateReservation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify(reservationData),
+            credentials: 'include' // Oturum bilgilerini dahil et
+        })
+        .then(function(response) {
+            console.log("API yanıtı status:", response.status);
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Kullanıcı giriş yapmamış
+                    window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+                    throw new Error('Bu işlemi gerçekleştirmek için giriş yapmanız gerekiyor.');
+                }
+                
+                return response.text().then(function(text) {
+                    console.log("Hata metni:", text);
+                    try {
+                        // Yanıt JSON format mı kontrol et
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.error || 'Rezervasyon oluşturulurken bir hata oluştu');
+                    } catch (e) {
+                        // JSON parse hatası - düz metin olarak döndür
+                        throw new Error('Rezervasyon oluşturulurken bir hata oluştu: ' + text);
+                    }
+                });
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            // Başarılı rezervasyon
+            console.log('Rezervasyon başarılı:', data);
+            
+            // Modal'da bilgileri göster
+            var resourceName = resourceType;
+            if (resourceType === 'library') resourceName = 'Kütüphane';
+            else if (resourceType === 'room') resourceName = 'Proje Odası';
+            else if (resourceType === 'conference') resourceName = 'Konferans Salonu';
+            
+            document.getElementById('reservationDate').textContent = date;
+            document.getElementById('reservationTime').textContent = timeSlot;
+            document.getElementById('reservationResource').textContent = resourceName;
+            
+            // Müsait saatleri güncelle
+            updateAvailableTimes(date, resourceType);
+            
+            // Saat seçim bölmesini kapat
+            document.getElementById('saatSecimBolmesi').style.display = 'none';
+            
+            // Rezervasyon başarılı modal'ını göster
+            var successModal = new bootstrap.Modal(document.getElementById('reservationSuccessModal'));
+            successModal.show();
+            
+            // Sayfayı kesinlikle yenile (modal kapandığında)
+            var reservationSuccessModal = document.getElementById('reservationSuccessModal');
+            reservationSuccessModal.addEventListener('hidden.bs.modal', function() {
+                console.log('Modal kapandı, sayfa yenileniyor...');
+                window.location.reload();
+            });
+            
+            // Alternatif olarak, 2 saniye sonra sayfayı otomatik yenileme için:
+            setTimeout(function() {
+                console.log('2 saniye doldu, sayfa yenileniyor...');
+                window.location.reload();
+            }, 2000);
+        })
+        .catch(function(error) {
+            console.error('Rezervasyon hatası:', error);
+            showErrorModal(error.message || 'Rezervasyon oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+        });
+    }
+    
+    // Rezervasyon oluşturma isteği sonrası saatleri güncelle
+    function updateAvailableTimes(date, resourceType) {
+        var bolme = document.getElementById('saatSecimBolmesi');
+        if (bolme.style.display === 'none') return; // Görünür değilse güncelleme yapma
+        
+        var url = `/Rezervasyon/GetAvailableHours?date=${date}&resourceType=${resourceType}`;
+        
+        fetch(url)
+            .then(function(response) {
+                if (!response.ok) throw new Error('Sunucu yanıtı: ' + response.status);
+                return response.json();
+            })
+            .then(function(data) {
+                // Saatler listesini güncelle
+                var saatlerDiv = bolme.querySelector('.saatler-listesi');
+                if (saatlerDiv) {
+                    saatlerDiv.innerHTML = ''; // Temizle
+                    
+                    // Saatleri yeniden göster
+                    saatleriGoster(data, saatlerDiv, date, bolme);
+                    
+                    console.log('Saatler güncellendi!');
+                }
+            })
+            .catch(function(error) {
+                console.error('Saatleri güncellerken hata:', error);
+            });
+    }
+    
+    function showErrorModal(message) {
+        document.getElementById('errorMessage').textContent = message;
+        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+    }
+    
+    function takvimGuncelle(yil, ay) {
+        // Ay başlığını güncelle
+        document.getElementById('suankiAyYil').textContent = aylar[ay-1] + ' ' + yil;
+        
+        var gunlerContainer = document.getElementById('gunlerContainer');
+        gunlerContainer.innerHTML = ''; // İçeriği temizle
+        
+        // Ayın ilk gününü bul
+        var ayinIlkGunu = new Date(yil, ay - 1, 1);
+        
+        // Ayın kaç gün olduğunu bul
+        var aydakiGunSayisi = new Date(yil, ay, 0).getDate();
+        
+        // Ayın ilk gününün haftanın hangi günü olduğunu hesapla (Pazartesi: 0, ... Pazar: 6)
+        var haftaninGunu = ayinIlkGunu.getDay(); // 0: Pazar, 1: Pazartesi, ..., 6: Cumartesi
+        haftaninGunu = haftaninGunu === 0 ? 6 : haftaninGunu - 1; // 0: Pazartesi, ..., 6: Pazar
+        
+        // Önceki ayın boş günleri
+        for (var i = 0; i < haftaninGunu; i++) {
+            var bosGun = document.createElement('div');
+            bosGun.className = 'gun aktif-degil';
+            gunlerContainer.appendChild(bosGun);
+        }
+        
+        // Bugünün tarihini kontrol için
+        var bugun = new Date();
+        var bugunYil = bugun.getFullYear();
+        var bugunAy = bugun.getMonth() + 1;
+        var bugunGun = bugun.getDate();
+        
+        // Bugün tarihini saat olmadan oluştur (karşılaştırma için)
+        var bugunTarih = new Date(bugunYil, bugunAy - 1, bugunGun);
+        
+        // Kaynak tipine göre seçili günü takip et
+        var kaynakAnahtar = kaynakTipi + "_seciliGun";
+        var ayAnahtar = kaynakTipi + "_seciliAy";
+        var yilAnahtar = kaynakTipi + "_seciliYil";
+        
+        var seciliGun = localStorage.getItem(kaynakAnahtar);
+        var seciliAy = localStorage.getItem(ayAnahtar);
+        var seciliYil = localStorage.getItem(yilAnahtar);
+        
+        // Ayın günleri
+        for (var gun = 1; gun <= aydakiGunSayisi; gun++) {
+            var gunElementi = document.createElement('div');
+            gunElementi.className = 'gun';
+            gunElementi.textContent = gun;
+            
+            // Tarih formatını oluştur (YYYY-MM-DD)
+            var formatlıAy = ay.toString().padStart(2, '0');
+            var formatlıGun = gun.toString().padStart(2, '0');
+            var tarih = yil + '-' + formatlıAy + '-' + formatlıGun;
+            gunElementi.dataset.tarih = tarih;
+            gunElementi.dataset.kaynakTipi = kaynakTipi;
+            
+            // Günün tarihini oluştur
+            var gunTarih = new Date(yil, ay - 1, gun);
+            
+            // Geçmiş tarih kontrolü
+            var gecmisTarih = gunTarih < bugunTarih;
+            if (gecmisTarih) {
+                gunElementi.classList.add('aktif-degil');
+            }
+            
+            // Bu gün bugün mü kontrol et
+            if (yil === bugunYil && ay === bugunAy && gun === bugunGun) {
+                gunElementi.classList.add('bugun');
+            }
+            
+            // Seçili gün mü kontrol et
+            if (seciliGun && parseInt(seciliGun) === gun && 
+                parseInt(seciliAy) === ay && parseInt(seciliYil) === yil) {
+                gunElementi.classList.add('secili');
+            }
+            
+            // Gün tıklama özelliği - sadece geçmiş olmayan günler için
+            if (!gecmisTarih) {
+                gunElementi.setAttribute('onclick', 'event.preventDefault(); event.stopPropagation(); gunSec(this, ' + gun + ', ' + ay + ', ' + yil + ', "' + tarih + '"); return false;');
+            }
+            
+            gunlerContainer.appendChild(gunElementi);
+        }
+    }
+    
+    // Takvim oluşturulduktan sonra çalışacak fonksiyon
+    document.addEventListener('DOMContentLoaded', function() {
+        takvimGuncelle(suankiYil, suankiAy);
+        
+        // Her sayfa yüklendiğinde, varsa seçili tarihi kontrol et ve saat aralıklarını göster
+        var kaynakAnahtar = kaynakTipi + "_seciliGun";
+        var ayAnahtar = kaynakTipi + "_seciliAy";
+        var yilAnahtar = kaynakTipi + "_seciliYil";
+        
+        var seciliGun = localStorage.getItem(kaynakAnahtar);
+        var seciliAy = localStorage.getItem(ayAnahtar);
+        var seciliYil = localStorage.getItem(yilAnahtar);
+        
+        // Eğer o anda seçili bir tarih varsa, saat seçimi bölmesini göster
+        if (seciliGun && seciliAy && seciliYil) {
+            // Tarih formatını oluştur
+            var formatlıAy = parseInt(seciliAy).toString().padStart(2, '0');
+            var formatlıGun = parseInt(seciliGun).toString().padStart(2, '0');
+            var tarih = seciliYil + '-' + formatlıAy + '-' + formatlıGun;
+            
+            // Seçili günü bul ve vurgula
+            var gunElementleri = document.querySelectorAll('.gun');
+            gunElementleri.forEach(function(element) {
+                if (element.dataset.tarih === tarih) {
+                    element.classList.add('secili');
+                    // Saat seçim bölmesini göster
+                    setTimeout(function() {
+                        saatSecimBolmesiniGoster(tarih);
+                    }, 500); // Sayfanın tam yüklenmesi için biraz bekle
+                }
+            });
+        }
+        
+        // Kaynak tipini konsola yazdır (debug için)
+        console.log("Takvim kaynak tipi: " + kaynakTipi);
+    });
+</script>

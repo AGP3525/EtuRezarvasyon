@@ -1,0 +1,147 @@
+@model IEnumerable<EtuRezervasyon.Models.Reservation>
+
+@{
+    ViewData["Title"] = "Rezervasyonlarım";
+    Layout = "_Layout"; // Projenizdeki ana layout dosyasını kullanın
+}
+
+@Html.AntiForgeryToken()
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">@ViewData["Title"]</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center" role="alert">
+            Henüz yapılmış bir rezervasyonunuz bulunmamaktadır.
+        </div>
+        <div class="text-center mt-3">
+            <a href="@Url.Action("Index", "Home")#reservationSection" class="btn btn-primary">Yeni Rezervasyon Yap</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-striped table-bordered align-middle">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Kaynak Adı</th>
+                        <th>Başlangıç Zamanı</th>
+                        <th>Bitiş Zamanı</th>
+                        <th>Durum</th>
+                        <th>Oluşturulma Tarihi</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    @foreach (var item in Model)
+                    {
+                        <tr id="reservation-row-@item.Id">
+                            <td>@Html.DisplayFor(modelItem => item.Resource.Name)</td>
+                            <td>@item.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@item.EndTime.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="status-cell">
+                                <span class="badge @GetStatusBadgeClass(item.Status)">
+                                    @GetStatusDisplayName(item.Status)
+                                </span>
+                            </td>
+                            <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="action-cell">
+                                @if (item.Status.ToLower() == "pending" || item.Status.ToLower() == "approved")
+                                {
+                                    <button class="btn btn-danger btn-sm" onclick="cancelReservation(@item.Id)">
+                                        <i class="fas fa-times-circle me-1"></i> İptal Et
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "approved" => "bg-success",
+            "pending" => "bg-warning text-dark",
+            "rejected" => "bg-danger",
+            "cancelled" => "bg-secondary",
+            _ => "bg-info",
+        };
+    }
+
+    public string GetStatusDisplayName(string status)
+    {
+        return status.ToLower() switch
+        {
+            "approved" => "Onaylandı",
+            "pending" => "Beklemede",
+            "rejected" => "Reddedildi",
+            "cancelled" => "İptal Edildi",
+            _ => status,
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        function cancelReservation(reservationId) {
+            if (confirm("Bu rezervasyonu iptal etmek istediğinize emin misiniz?")) {
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (!tokenInput) {
+                    console.error("CSRF token not found!");
+                    alert("Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar deneyin.");
+                    return;
+                }
+                const token = tokenInput.value;
+
+                fetch(`/Rezervasyon/CancelReservation?id=${reservationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                        // 'Content-Type': 'application/json' // Eğer sunucu JSON bekliyorsa
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json().then(data => {
+                            alert(data.message || "Rezervasyon başarıyla iptal edildi.");
+                            const row = document.getElementById(`reservation-row-${reservationId}`);
+                            if (row) {
+                                const statusCell = row.querySelector('.status-cell');
+                                if (statusCell) {
+                                    statusCell.innerHTML = '<span class="badge bg-secondary">İptal Edildi</span>';
+                                }
+                                const actionCell = row.querySelector('.action-cell');
+                                if (actionCell) {
+                                    actionCell.innerHTML = '<span>-</span>'; // Butonu kaldır
+                                }
+                            } else {
+                                location.reload(); // Satır bulunamazsa sayfayı yenile
+                            }
+                        });
+                    } else {
+                        return response.json().then(data => {
+                            alert("İptal işlemi başarısız: " + (data.error || "Bilinmeyen bir hata oluştu."));
+                        }).catch(() => {
+                            alert("İptal işlemi sırasında bir sunucu hatası oluştu. Durum: " + response.status);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('İptal hatası:', error);
+                    alert("Bir ağ hatası veya sunucu ile iletişimde bir sorun oluştu.");
+                });
+            }
+        }
+    </script>
+}

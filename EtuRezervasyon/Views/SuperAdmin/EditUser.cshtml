@@ -1,0 +1,39 @@
+@model EtuRezervasyon.Models.User
+
+@{
+    ViewData["Title"] = "Kullanıcı Düzenle";
+}
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<form asp-action="EditUser" method="post" class="card card-body">
+    <input type="hidden" asp-for="UserId" />
+
+    <div class="mb-3">
+        <label class="form-label">Ad Soyad</label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Rol</label>
+        <select asp-for="RoleId" class="form-select" asp-items="ViewBag.Roles">
+            <option value="">-- Rol Seçin --</option>
+        </select>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="/SuperAdmin/Index" class="btn btn-secondary w-100 text-center">İptal</a>
+        <button type="submit" class="btn btn-primary w-100">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

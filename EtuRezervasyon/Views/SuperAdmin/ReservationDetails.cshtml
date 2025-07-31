@@ -1,0 +1,33 @@
+@model EtuRezervasyon.Models.Reservation
+
+@{
+    ViewData["Title"] = "Rezervasyon Detayları";
+}
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Kullanıcı</dt>
+            <dd class="col-sm-9">@Model.User.FullName</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.User.Email</dd>
+
+            <dt class="col-sm-3">Kaynak</dt>
+            <dd class="col-sm-9">@Model.Resource.Name</dd>
+
+            <dt class="col-sm-3">Başlangıç Zamanı</dt>
+            <dd class="col-sm-9">@Model.StartTime.ToString("g")</dd>
+
+            <dt class="col-sm-3">Bitiş Zamanı</dt>
+            <dd class="col-sm-9">@Model.EndTime.ToString("g")</dd>
+
+            <dt class="col-sm-3">Durum</dt>
+            <dd class="col-sm-9"><span class="badge bg-secondary text-uppercase">@Model.Status</span></dd>
+        </dl>
+
+        <a href="/SuperAdmin/Index" class="btn btn-secondary">Geri Dön</a>
+    </div>
+</div>

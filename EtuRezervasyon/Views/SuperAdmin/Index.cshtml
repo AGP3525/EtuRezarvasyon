@@ -1,0 +1,688 @@
+@{
+    ViewData["Title"] = "Süper Admin Panel";
+    Layout = "_Layout";
+}
+
+@* CSRF koruması için gerekli token *@
+@Html.AntiForgeryToken()
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h1 class="h3 mb-0 text-gray-800">Süper Admin Panel</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- İstatistik Kartları -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Toplam Rezervasyon
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalReservations">@ViewBag.TotalReservations</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Onaylı Rezervasyonlar
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="approvedReservations">@ViewBag.ApprovedReservations</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Bekleyen Rezervasyonlar
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingReservations">@ViewBag.PendingReservations</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1"> 
+                                Reddedilen Rezervasyonlar
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="rejectedReservations">@ViewBag.RejectedReservations</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ban fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="reservations-tab" data-bs-toggle="tab" data-bs-target="#reservations"
+                    type="button" role="tab" aria-controls="reservations" aria-selected="true">
+                <i class="fas fa-calendar-alt me-2"></i>Rezervasyonlar
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users"
+                    type="button" role="tab" aria-controls="users" aria-selected="false">
+                <i class="fas fa-users me-2"></i>Kullanıcılar
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="add-user-tab" data-bs-toggle="tab" data-bs-target="#add-user"
+                    type="button" role="tab" aria-controls="add-user" aria-selected="false">
+                <i class="fas fa-user-plus me-2"></i>Kullanıcı Ekle
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="adminTabsContent">
+        <!-- Rezervasyonlar Sekmesi -->
+        <div class="tab-pane fade show active" id="reservations" role="tabpanel" aria-labelledby="reservations-tab">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Rezervasyon Yönetimi</h6>
+                    <div class="d-flex">
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="filterDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i> Filtrele
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="filterReservations('all')">Tümü</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterReservations('approved')">Onaylı</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterReservations('pending')">Beklemede</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterReservations('rejected')">Reddedildi</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterReservations('cancelled')">İptal Edildi</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped table-bordered align-middle text-center"
+                               id="reservationTable">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Kullanıcı</th>
+                                <th>Email</th>
+                                <th>Kaynak</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- JavaScript ile doldurulacak -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!--
+                    <nav aria-label="Sayfalama">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Önceki</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Sonraki</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanıcılar Sekmesi -->
+        <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Kullanıcı Yönetimi</h6>
+                    <div class="d-flex">
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="userFilterDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i> Filtrele
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="userFilterDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="filterUsers('all')">Tümü</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterUsers('admin')">Yöneticiler</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterUsers('user')">Normal Kullanıcılar</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover text-center" id="userTable">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Ad Soyad</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>Oluşturulma</th>
+                                <th>İşlemler</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- JS ile doldurulacak -->
+                            </tbody>
+                        </table>
+
+                    </div>
+                    <nav aria-label="Sayfalama">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Önceki</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Sonraki</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanıcı Ekle Sekmesi -->
+        <div class="tab-pane fade" id="add-user" role="tabpanel" aria-labelledby="add-user-tab">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Kullanıcı Ekle</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddUser" id="addUserForm">
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">Ad Soyad</label>
+                            <input name="FullName" type="text" class="form-control input-half" id="firstName" placeholder="Ad" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">E-posta</label>
+                            <input name="Email" type="email" class="form-control input-half" id="email" placeholder="E-posta"
+                                   pattern=".+erzurum\.edu\.tr" required>
+                            <div  class="form-text">E-posta adresi erzurum.edu.tr uzantılı olmalıdır.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Şifre</label>
+                            <input name="Password" type="password" class="form-control input-half" id="password" placeholder="Şifre"
+                                   required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Ekle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+
+    .border-left-danger { /* Yeni eklenen stil */
+        border-left: 0.25rem solid #dc3545 !important; /* Bootstrap danger rengi */
+    }
+
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+
+    .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        word-wrap: break-word;
+        background-color: #fff;
+        background-clip: border-box;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        margin-bottom: 1rem;
+    }
+
+    .nav-tabs .nav-link {
+        margin-bottom: -1px;
+        border-top-left-radius: 0.35rem;
+        border-top-right-radius: 0.35rem;
+    }
+
+    input:invalid {
+        border-color: #dc3545;
+    }
+
+    input:invalid:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    input:invalid + .form-text {
+        color: #dc3545;
+    }
+
+    .form-control.input-half {
+        width: 50%;
+        border: 2px solid #ced4da;
+        border-radius: 0.35rem;
+        padding: 0.5rem;
+    }
+
+    .form-control.input-half:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+
+<script>
+    //rezervasyon cekme metodu baslangic
+    document.addEventListener('DOMContentLoaded', function () {
+        // Rezervasyon verilerini yükle
+        fetch('/SuperAdmin/GetAllReservations')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#reservationTable tbody');
+                tbody.innerHTML = '';
+                data.forEach((res, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+    <td><strong>#${res.id}</strong></td>
+    <td>${res.userFullName}</td>
+    <td>${res.email}</td>
+    <td>${res.resourceName}</td>
+    <td>${res.startTime}</td>
+    <td>${res.endTime}</td>
+    <td><span class="badge bg-${getStatusColor(res.status)} text-uppercase">${res.status}</span></td>
+    <td>
+        <button class="btn btn-sm btn-info text-white me-1" onclick="viewDetails(${res.id})" title="Detay"><i class="fas fa-eye"></i></button>
+        <button class="btn btn-sm btn-warning me-1" onclick="editReservation(${res.id})" title="Düzenle"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-danger me-1" onclick="deleteReservation(${res.id})" title="Sil"><i class="fas fa-trash"></i></button>
+    </td>
+`;
+
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Veri çekme hatası:', error);
+            });
+
+        // İstatistik verilerini yükle
+        fetch('/SuperAdmin/GetReservationStatistics')
+            .then(response => response.json())
+            .then(data => {
+                // İstatistik kartlarını güncelle
+                document.getElementById('totalReservations').textContent = data.totalReservations;
+                document.getElementById('approvedReservations').textContent = data.approvedReservations;
+                document.getElementById('pendingReservations').textContent = data.pendingReservations;
+                document.getElementById('rejectedReservations').textContent = data.rejectedReservations;
+            })
+            .catch(error => {
+                console.error('İstatistik verisi çekme hatası:', error);
+            });
+
+        // Duruma göre renk seç
+        function getStatusColor(status) {
+            switch (status) {
+                case 'approved':
+                    return 'success';
+                case 'pending':
+                    return 'warning';
+                case 'cancelled':
+                    return 'danger';
+                case 'rejected':
+                    return 'secondary';
+                default:
+                    return 'info';
+            }
+        }
+    });
+
+
+    // Tab değişiminde animasyon efekti
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabEls.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', event => {
+                const target = document.querySelector(event.target.getAttribute('data-bs-target'));
+                if (target) {
+                    target.classList.add('show');
+                }
+            });
+        });
+    });
+    function viewDetails(id) {
+        window.location.href = `/SuperAdmin/ReservationDetails/${id}`;
+    }
+
+    function editReservation(id) {
+        window.location.href = `/SuperAdmin/EditReservation/${id}`;
+    }
+
+    function deleteReservation(id) {
+        if (confirm("Bu rezervasyonu silmek istediğinize emin misiniz?")) {
+            fetch(`/SuperAdmin/DeleteReservation/${id}`, {
+                method: 'DELETE'
+            })
+                .then(res => {
+                    if (res.ok) {
+                        alert("Silme başarılı.");
+                        location.reload(); // Sayfayı yenile
+                    } else {
+                        alert("Silme işlemi başarısız.");
+                    }
+                });
+        }
+    }
+    
+    // Rezervasyon onaylama işlemi
+    function approveReservation(id) {
+        if (confirm("Bu rezervasyonu onaylamak istediğinize emin misiniz?")) {
+            // CSRF Token'ı al
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            fetch('/SuperAdmin/ApproveReservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `id=${id}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Rezervasyon başarıyla onaylandı.");
+                    location.reload(); // Sayfayı yenile
+                } else {
+                    alert("Onaylama işlemi başarısız oldu.");
+                }
+            })
+            .catch(error => {
+                console.error('Onaylama hatası:', error);
+                alert("Bir hata oluştu: " + error);
+            });
+        }
+    }
+    
+    // Rezervasyon reddetme işlemi
+    function rejectReservation(id) {
+        if (confirm("Bu rezervasyonu reddetmek istediğinize emin misiniz?")) {
+            // CSRF Token'ı al
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            fetch('/SuperAdmin/RejectReservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `id=${id}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Rezervasyon başarıyla reddedildi.");
+                    location.reload(); // Sayfayı yenile
+                } else {
+                    alert("Reddetme işlemi başarısız oldu.");
+                }
+            })
+            .catch(error => {
+                console.error('Reddetme hatası:', error);
+                alert("Bir hata oluştu: " + error);
+            });
+        }
+    }
+    
+    // Rezervasyon iptal etme işlemi
+    function cancelReservation(id) {
+        if (confirm("Bu rezervasyonu iptal etmek istediğinize emin misiniz?")) {
+            // CSRF Token'ı al
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            fetch('/SuperAdmin/CancelReservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `id=${id}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Rezervasyon başarıyla iptal edildi.");
+                    location.reload(); // Sayfayı yenile
+                } else {
+                    alert("İptal işlemi başarısız oldu.");
+                }
+            })
+            .catch(error => {
+                console.error('İptal hatası:', error);
+                alert("Bir hata oluştu: " + error);
+            });
+        }
+    }
+//rezervasyon bitis
+
+</script>
+
+<!--kullanicilar js-->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    fetch('/SuperAdmin/GetAllUsers')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.querySelector('#userTable tbody');
+            tbody.innerHTML = '';
+            data.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>#${user.userId}</strong></td>
+                    <td>${user.fullName}</td>
+                    <td>${user.email}</td>
+                    <td>${user.role}</td>
+                    <td>${user.createdAt}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info text-white me-1" onclick="viewUser(${user.userId})" title="Detay">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning me-1" onclick="editUser(${user.userId})" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-primary me-1" onclick="updatePassword(${user.userId})" title="Şifre Güncelle">
+                            <i class="fas fa-key"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.userId})" title="Sil">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(err => console.error("Kullanıcı verisi çekilemedi:", err));
+});
+
+function viewUser(id) {
+    window.location.href = `/SuperAdmin/UserDetails/${id}`;
+}
+
+function editUser(id) {
+    window.location.href = `/SuperAdmin/EditUser/${id}`;
+}
+
+function deleteUser(id) {
+    if (confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) {
+        fetch(`/SuperAdmin/DeleteUser/${id}`, {
+            method: 'DELETE'
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert("Kullanıcı silindi.");
+                    location.reload();
+                } else {
+                    alert("Silme işlemi başarısız.");
+                }
+            });
+    }
+}
+
+function updatePassword(userId) {
+    document.getElementById('updatePasswordUserId').value = userId;
+    const modal = new bootstrap.Modal(document.getElementById('updatePasswordModal'));
+    modal.show();
+}
+
+function submitPasswordUpdate() {
+    const userId = document.getElementById('updatePasswordUserId').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (newPassword !== confirmPassword) {
+        alert("Şifreler eşleşmiyor!");
+        return;
+    }
+
+    // CSRF Token'ı al
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    fetch('/SuperAdmin/UpdateUserPassword', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': token
+        },
+        body: JSON.stringify({
+            userId: userId,
+            newPassword: newPassword
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("Şifre başarıyla güncellendi!");
+            const modal = bootstrap.Modal.getInstance(document.getElementById('updatePasswordModal'));
+            modal.hide();
+            document.getElementById('updatePasswordForm').reset();
+        } else {
+            alert("Şifre güncellenirken bir hata oluştu!");
+        }
+    })
+    .catch(error => {
+        console.error('Şifre güncelleme hatası:', error);
+        alert("Bir hata oluştu: " + error);
+    });
+}
+</script>
+
+<!-- Şifre Güncelleme Modal -->
+<div class="modal fade" id="updatePasswordModal" tabindex="-1" aria-labelledby="updatePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updatePasswordModalLabel">Şifre Güncelle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updatePasswordForm">
+                    <input type="hidden" id="updatePasswordUserId">
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Yeni Şifre</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Şifre Tekrar</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="submitPasswordUpdate()">Güncelle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Rezervasyon filtreleme fonksiyonu
+function filterReservations(status) {
+    const rows = document.querySelectorAll('#reservationTable tbody tr');
+    rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(7) span');
+        if (status === 'all' || statusCell.textContent.toLowerCase() === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Kullanıcı filtreleme fonksiyonu
+function filterUsers(role) {
+    const rows = document.querySelectorAll('#userTable tbody tr');
+    rows.forEach(row => {
+        const roleCell = row.querySelector('td:nth-child(4)');
+        if (role === 'all' || 
+            (role === 'admin' && roleCell.textContent.toLowerCase().includes('admin')) ||
+            (role === 'user' && !roleCell.textContent.toLowerCase().includes('admin'))) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+
